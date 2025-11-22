@@ -10,7 +10,7 @@ export default function Home() {
             🗺️ Wanderwise
           </h1>
           <p className="text-gray-600 text-lg mb-4">
-            AI-Powered Walking Tours • v0.2
+            AI-Powered Walking Tours • v1.0
           </p>
           <Link  
             href="/routes"
