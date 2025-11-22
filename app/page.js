@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import RouteGenerator from '@/components/RouteGenerator'
 
 export default function Home() {
@@ -11,12 +12,12 @@ export default function Home() {
           <p className="text-gray-600 text-lg mb-4">
             AI-Powered Walking Tours • v0.2
           </p>
-          <a 
+          <Link  
             href="/routes"
             className="inline-block text-indigo-600 hover:text-indigo-800 font-medium"
           >
             View My Saved Routes →
-          </a>
+          </Link>
      
         </div>
         
