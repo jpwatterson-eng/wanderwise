@@ -343,14 +343,21 @@ const saveChanges = async () => {
       // Update local state
       setRoute({ ...route, is_shared: true, share_token: shareToken })
       
-      // Copy link to clipboard
+      // Try to copy link to clipboard
       const shareUrl = `${window.location.origin}/shared/${shareToken}`
-      await navigator.clipboard.writeText(shareUrl)
       
-      alert('Share link copied to clipboard!\n\nAnyone with this link can view this route.')
+      try {
+        await navigator.clipboard.writeText(shareUrl)
+        alert('✅ Route shared successfully!\n\n📋 Share link copied to clipboard.\n\nAnyone with this link can view this route.')
+      } catch (clipboardError) {
+        // Clipboard failed but sharing succeeded
+        console.log('Clipboard error:', clipboardError)
+        alert(`✅ Route shared successfully!\n\n📋 Share link:\n${shareUrl}\n\n(Copy this link manually - automatic copy failed)`)
+      }
+      
     } catch (error) {
       console.error('Error sharing route:', error)
-      alert('Failed to share route. Please try again.')
+      alert('❌ Failed to share route. Please try again.')
     }
   }
 
@@ -444,7 +451,7 @@ const saveChanges = async () => {
                 </svg>
                 Export / Print
               </a>
-              
+
               {/* Share/Unshare buttons */}
               {!route.is_shared ? (
                 <button
