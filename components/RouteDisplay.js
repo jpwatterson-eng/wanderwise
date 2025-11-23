@@ -2,8 +2,10 @@
 import { useState } from 'react'
 import { MapPin, Clock, Activity, Save, Check } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/AuthContext'
 
 export default function RouteDisplay({ route, formData }) {
+  const { user } = useAuth()
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -15,6 +17,7 @@ export default function RouteDisplay({ route, formData }) {
       const { data: routeRecord, error: routeError } = await supabase
         .from('routes')
         .insert({
+          user_id: user.id,
           route_name: route.routeName,
           city: formData.city,
           total_distance: route.totalDistance,

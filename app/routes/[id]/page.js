@@ -1,6 +1,8 @@
 'use client'
 import { use, useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/AuthContext'
+import { useRouter } from 'next/navigation'
 import { MapPin, Clock, Activity, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
@@ -18,13 +20,22 @@ export default function RouteDetail({ params }) {
   // Unwrap params using React.use()
   const { id } = use(params)
   
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
+
   const [route, setRoute] = useState(null)
   const [stops, setStops] = useState([])
   const [loading, setLoading] = useState(true)
-  const [editMode, setEditMode] = useState(false)  // ADD THIS
-  const [editedRoute, setEditedRoute] = useState(null)  // ADD THIS
-  const [editedStops, setEditedStops] = useState([])  // ADD THIS
-  const [saving, setSaving] = useState(false)  // ADD THIS 
+  const [editMode, setEditMode] = useState(false)
+  const [editedRoute, setEditedRoute] = useState(null)
+  const [editedStops, setEditedStops] = useState([])
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login')
+    }
+  }, [authLoading, user, router])
 
   // move from above 18/11/2025 despite previous issues
 
@@ -308,6 +319,71 @@ const saveChanges = async () => {
     }
   }
 
+  // SHARING FUNCTIONS
+  const generateShareToken = () => {
+    return Math.random().toString(36).substring(2, 15) + 
+           Math.random().toString(36).substring(2, 15)
+  }
+
+  const shareRoute = async () => {
+    try {
+      const shareToken = generateShareToken()
+      
+      const { error } = await supabase
+        .from('routes')
+        .update({
+          is_shared: true,
+          share_token: shareToken,
+          shared_at: new Date().toISOString()
+        })
+        .eq('id', id)
+
+      if (error) throw error
+
+      // Update local state
+      setRoute({ ...route, is_shared: true, share_token: shareToken })
+      
+      // Copy link to clipboard
+      const shareUrl = `${window.location.origin}/shared/${shareToken}`
+      await navigator.clipboard.writeText(shareUrl)
+      
+      alert('Share link copied to clipboard!\n\nAnyone with this link can view this route.')
+    } catch (error) {
+      console.error('Error sharing route:', error)
+      alert('Failed to share route. Please try again.')
+    }
+  }
+
+  const unshareRoute = async () => {
+    if (!confirm('Stop sharing this route? The current link will stop working.')) {
+      return
+    }
+
+    try {
+      const { error } = await supabase
+        .from('routes')
+        .update({
+          is_shared: false,
+          share_token: null
+        })
+        .eq('id', id)
+
+      if (error) throw error
+
+      setRoute({ ...route, is_shared: false, share_token: null })
+      alert('Route is no longer shared')
+    } catch (error) {
+      console.error('Error unsharing route:', error)
+      alert('Failed to unshare route. Please try again.')
+    }
+  }
+
+  const copyShareLink = async () => {
+    const shareUrl = `${window.location.origin}/shared/${route.share_token}`
+    await navigator.clipboard.writeText(shareUrl)
+    alert('Share link copied to clipboard!')
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
@@ -348,7 +424,7 @@ const saveChanges = async () => {
             Back to My Routes
           </Link>
 
-          {/* Edit/Save/Cancel/Export Buttons */}
+          {/* Edit/Save/Cancel/Export/Share Buttons */}
           {!editMode ? (
             <div className="flex gap-2">
               <button
@@ -368,6 +444,32 @@ const saveChanges = async () => {
                 </svg>
                 Export / Print
               </a>
+              
+              {/* Share/Unshare buttons */}
+              {!route.is_shared ? (
+                <button
+                  onClick={shareRoute}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  📤 Share Route
+                </button>
+              ) : (
+                <div className="flex gap-2">
+                  <button
+                    onClick={copyShareLink}
+                    className="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg hover:bg-blue-200 transition-colors"
+                  >
+                    📋 Copy Link
+                  </button>
+                  <button
+                    onClick={unshareRoute}
+                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+                  >
+                    Stop Sharing
+                  </button>
+                </div>
+              )}
+
               <button
                 onClick={deleteRoute}
                 className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors ml-auto"

@@ -1,12 +1,23 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/lib/AuthContext'
+import { useRouter } from 'next/navigation'
 import { MapPin, Clock, Activity, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 
 export default function SavedRoutes() {
+  const { user, loading: authLoading } = useAuth()
+  const router = useRouter()
   const [routes, setRoutes] = useState([])
   const [loading, setLoading] = useState(true)
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login')
+    }
+  }, [authLoading, user, router])
 
   useEffect(() => {
     loadRoutes()

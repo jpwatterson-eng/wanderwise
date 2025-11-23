@@ -1,4 +1,5 @@
 import './globals.css'
+import { AuthProvider } from '@/lib/AuthContext'
 
 export const metadata = {
   title: 'Wanderwise',
@@ -16,7 +17,11 @@ export default function RootLayout({ children }) {
           crossOrigin=""
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   )
 }
